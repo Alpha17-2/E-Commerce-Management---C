@@ -31,6 +31,8 @@ struct Order
 };
 int isLoggedIn = 0; // global variable
 
+int total = 0;
+
 void addToCategory()
 {
 
@@ -142,18 +144,93 @@ void shop(char *phNo)
     }
 }
 
+// Return 1 if found else 0
+int addItemsIfFound(int pid, int q)
+{
+    FILE *file = fopen("products.txt", "rb");
+    if (file == NULL)
+    {
+        perror("Error opening file");
+    }
+
+    struct Product product;
+    while (fread(&product, sizeof(struct Product), 1, file))
+    {
+        if (product.pid == pid)
+        {
+            total += (q * product.price);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+struct Product fetechProduct(int pid)
+{
+    FILE *file = fopen("products.txt", "rb");
+    if (file == NULL)
+    {
+        perror("Error opening file");
+    }
+
+    struct Product product;
+    while (fread(&product, sizeof(struct Product), 1, file))
+    {
+        if (product.pid == pid)
+        {
+            return product;
+        }
+    }
+}
+
+void addToCart()
+{
+    struct Product cart[20];
+    int numberOfItems = 0;
+    int quantity[20];
+    char choice;
+    do
+    {
+        printf("Enter id of the product and quantity\n");
+        int id, q;
+        scanf("%d %d\n", &id, &q);
+        if (addItemsIfFound(id, q) == 1)
+        {
+            printf("Item added to your cart\n");
+            cart[numberOfItems] = fetechProduct(id);
+            quantity[numberOfItems] = q;
+            numberOfItems++;
+        }
+        else
+        {
+            printf("No such item found\n");
+        }
+        printf("Do you want to shop more ? (y/n) \n");
+        scanf("%c",&choice);
+    } while (choice != 'n');
+
+    if (total > 0)
+    {
+        printf("PID\tPName\tPrice\tQty\tAmount\n");
+        for (int i = 0; i < numberOfItems; i++)
+        {
+            printf("%d\t%s\t%d\t%d\t%d\n", cart[i].pid, cart[i].pname, cart[i].price, quantity[i], (quantity[i] * cart[i].price));
+        }
+        printf("Total : %d", total);
+    }
+}
+
 void displayProducts()
 {
     FILE *file = fopen("products.txt", "rb");
     if (file == NULL)
     {
         perror("Error opening file");
-       
     }
 
     struct Product product;
     int found = 0;
-    printf("Products\n\n");
+    printf("\nProducts\n");
     while (fread(&product, sizeof(struct Product), 1, file))
     {
         printf("Name %s\n", product.pname);
@@ -161,7 +238,7 @@ void displayProducts()
         printf("Price %d\n", product.price);
         printf("\n");
     }
-    
+    addToCart();
 
     fclose(file);
 }
@@ -173,7 +250,6 @@ void displayProfile(char *phNo)
     if (file == NULL)
     {
         perror("Error opening file");
-       
     }
 
     struct Profile profile;
@@ -240,8 +316,6 @@ void login()
         printf("You are not logged in !!\n");
     }
 }
-
-
 
 int main()
 {
