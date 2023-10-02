@@ -119,31 +119,6 @@ int registerUser(const char *filename, const struct Credential *newCredential, s
     return 1; // Return success code
 }
 
-/* The login function prompts the user to enter their phone number and password, validates the
- credentials against a database, and either logs the user in or displays an error message.
-*/
-
-void shop(char *phNo)
-{
-    printf("Shop using categories\n\n");
-    printf("1. Mobiles\n");
-    printf("2. Laptops\n");
-    printf("3. Television\n");
-    printf("4. Headphones\n");
-    int shopChoice;
-    printf("Enter your choice\n");
-    scanf("%d", &shopChoice);
-    switch (shopChoice)
-    {
-    case 1:
-
-        break;
-
-    default:
-        break;
-    }
-}
-
 // Return 1 if found else 0
 int addItemsIfFound(int pid, int q)
 {
@@ -188,15 +163,16 @@ void addToCart()
     struct Product cart[20];
     int numberOfItems = 0;
     int quantity[20];
-    char choice;
-    do
+    char choice = 1;
+    while (choice == 1)
     {
         printf("Enter id of the product and quantity\n");
         int id, q;
-        scanf("%d %d\n", &id, &q);
+        scanf("%d %d", &id, &q);
+        
         if (addItemsIfFound(id, q) == 1)
         {
-            printf("Item added to your cart\n");
+            printf("Item successfully added to your cart\n");
             cart[numberOfItems] = fetechProduct(id);
             quantity[numberOfItems] = q;
             numberOfItems++;
@@ -205,18 +181,30 @@ void addToCart()
         {
             printf("No such item found\n");
         }
-        printf("Do you want to shop more ? (y/n) \n");
-        scanf("%c",&choice);
-    } while (choice != 'n');
+        printf("\nDo you want to shop more ? Press 1 to continue or 0 to quit. \n");
+        scanf("%d", &choice);
+    }
 
     if (total > 0)
     {
-        printf("PID\tPName\tPrice\tQty\tAmount\n");
+        printf("\nYour Cart : \n");
+        printf("\nPID\tPName\tPrice\tQty\tAmount\n");
         for (int i = 0; i < numberOfItems; i++)
         {
             printf("%d\t%s\t%d\t%d\t%d\n", cart[i].pid, cart[i].pname, cart[i].price, quantity[i], (quantity[i] * cart[i].price));
         }
-        printf("Total : %d", total);
+        printf("\nTotal : %d\n", total);
+        printf("\nPress 1 to checkout or 0 to cancel\n");
+        int checkout;
+        scanf("%d", &checkout);
+        if (checkout == 1)
+        {
+            printf("Thank you for shopping !\n");
+        }
+        else
+        {
+            printf("Shop again !");
+        }
     }
 }
 
@@ -230,12 +218,12 @@ void displayProducts()
 
     struct Product product;
     int found = 0;
-    printf("\nProducts\n");
+    printf("\n******Products******\n\n");
     while (fread(&product, sizeof(struct Product), 1, file))
     {
-        printf("Name %s\n", product.pname);
-        printf("Id %d\n", product.pid);
-        printf("Price %d\n", product.price);
+        printf("Name : %s\n", product.pname);
+        printf("Id:  %d\n", product.pid);
+        printf("Price : %d\n", product.price);
         printf("\n");
     }
     addToCart();
@@ -266,12 +254,11 @@ void displayProfile(char *phNo)
 
 void displayMainMenu(char *phNo)
 {
-    printf("Main menu\n\n");
+    printf("\nMain menu\n\n");
     printf("1. View Profile\n");
-    printf("2. My Orders\n");
-    printf("3. Add to category\n");
-    printf("4. Display products\n");
-    printf("5. Logout\n");
+    printf("2. Add Products\n");
+    printf("3. Display Products\n");
+    printf("4. Logout\n");
     int menuChoice;
     scanf("%d", &menuChoice);
     switch (menuChoice)
@@ -280,12 +267,9 @@ void displayMainMenu(char *phNo)
         displayProfile(phNo);
         break;
     case 2:
-        showOrders(phNo);
-        break;
-    case 3:
         addToCategory();
         break;
-    case 4:
+    case 3:
         displayProducts();
         break;
     default:
@@ -307,24 +291,23 @@ void login()
     const char *filename = "cred_db.txt";
     if (validateAuth(filename, &current) == 1)
     {
-        printf("You are logged in !!\n");
+        printf("\nYou are logged in !!\n");
         displayMainMenu(phNo);
     }
     else
     {
-        // not validated
-        printf("You are not logged in !!\n");
+        printf("\nWrong credentials! Please try again.\n");
     }
 }
 
 int main()
 {
-
-    printf("Welcome to All Basket\n\n");
+    int authChoice;
+    printf("\nWelcome to All Basket\n\n");
     printf("1. Login\n");
     printf("2. Register\n");
     printf("3. Quit\n");
-    int authChoice;
+
     scanf("%d", &authChoice);
     if (authChoice == 1)
     {
