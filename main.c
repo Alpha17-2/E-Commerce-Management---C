@@ -29,9 +29,40 @@ struct Order
     char pid[10];
     double amount;
 };
-int isLoggedIn = 0; // global variable
 
 int total = 0;
+
+void displayOrders(char *phNo)
+{
+    FILE *file = fopen("orders.txt", "rb");
+    if (file == NULL)
+    {
+        perror("Error opening file");
+        return;
+    }
+
+    struct Order order;
+    int found = 0;
+
+    printf("\n******Orders******\n\n");
+    printf("Order ID\tPhone Number\tQty\tProduct ID\tAmount\n");
+    while (fread(&order, sizeof(struct Order), 1, file))
+    {
+        // Check if the order's phone number matches the provided phone number
+        if (strcmp(order.phNo, phNo) == 0)
+        {
+            printf("%s\t\t%s\t%d\t%s\t%.2lf\n", order.orderId, order.phNo, order.qty, order.pid, order.amount);
+            found = 1;
+        }
+    }
+
+    if (!found)
+    {
+        printf("No orders found for phone number: %s\n", phNo);
+    }
+
+    fclose(file);
+}
 
 void addToCategory()
 {
@@ -59,8 +90,22 @@ void addToCategory()
     }
 }
 
-void showOrders(char *phNo)
+void recordOrder(const struct Order *order)
 {
+    FILE *file = fopen("orders.txt", "ab"); // Open the file in append binary mode
+
+    if (file == NULL)
+    {
+        perror("Error opening file");
+        return; // Handle the error gracefully
+    }
+
+    if (fwrite(order, sizeof(struct Order), 1, file) != 1)
+    {
+        perror("Error writing to file");
+    }
+
+    fclose(file);
 }
 
 int validateAuth(const char *filename, const struct Credential *targetCredential)
@@ -158,7 +203,7 @@ struct Product fetechProduct(int pid)
     }
 }
 
-void addToCart()
+void addToCart(char *phNo)
 {
     struct Product cart[20];
     int numberOfItems = 0;
@@ -166,7 +211,7 @@ void addToCart()
     char choice = 1;
     while (choice == 1)
     {
-        printf("Enter id of the product and quantity\n");
+        printf("Enter id of the product and quantity to add item\n");
         int id, q;
         scanf("%d %d", &id, &q);
 
@@ -199,18 +244,54 @@ void addToCart()
         scanf("%d", &checkout);
         if (checkout == 1)
         {
-            struct Order order;
+            printf("\nYour Cart : \n");
+            // ... Display cart details ...
 
-            printf("Thank you for shopping !\n");
-        }
-        else
-        {
-            printf("Shop again !");
+            printf("\nTotal : %d\n", total);
+            printf("\nPress 1 to checkout or 0 to cancel\n");
+            int checkout;
+            scanf("%d", &checkout);
+            if (checkout == 1)
+            {
+                struct Order order;
+
+                // Generate a unique order ID, you can implement your own logic for this
+                // For simplicity, you can use a timestamp or a counter as an order ID.
+                // strcpy(order.orderId, "ORDER123"); // Replace with your logic to generate an order ID
+
+                // Copy user phone number
+                strcpy(order.phNo, phNo);
+
+                // Calculate total quantity and amount
+                int totalQuantity = 0;
+                double totalAmount = 0.0;
+                for (int i = 0; i < numberOfItems; i++)
+                {
+                    totalQuantity += quantity[i];
+                    totalAmount += quantity[i] * cart[i].price;
+                }
+
+                // Set order details
+                strcpy(order.orderId, "1");
+                order.qty = totalQuantity;
+                order.amount = totalAmount;
+
+                // Record the order
+                recordOrder(&order);
+
+                printf("Thank you for shopping!\n");
+
+                printf("Thank you for shopping !\n");
+            }
+            else
+            {
+                printf("Shop again !");
+            }
         }
     }
 }
 
-void displayProducts()
+void displayProducts(char *phNo)
 {
     FILE *file = fopen("products.txt", "rb");
     if (file == NULL)
@@ -228,7 +309,7 @@ void displayProducts()
         printf("Price : %d\n", product.price);
         printf("\n");
     }
-    addToCart();
+    addToCart(phNo);
 
     fclose(file);
 }
@@ -259,7 +340,8 @@ void displayMainMenu(char *phNo)
     printf("\nMain menu\n\n");
     printf("1. View Profile\n");
     printf("2. Display Products\n");
-    printf("3. Logout\n");
+    printf("3. Display My Orders\n");
+    printf("4. Logout\n");
     int menuChoice;
     scanf("%d", &menuChoice);
     switch (menuChoice)
@@ -268,8 +350,11 @@ void displayMainMenu(char *phNo)
         displayProfile(phNo);
         break;
     case 2:
-        displayProducts();
+        displayProducts(phNo);
         break;
+    case 3:
+        displayOrders(phNo);
+
     default:
         break;
     }
@@ -688,60 +773,3 @@ int main()
     }
     return 0;
 }
-
-/*
-
-#include <stdio.h>
-#include <string.h>
-
-// ... (Existing code with structures and functions)
-
-// Function to edit a product by its ID
-
-
-// ... (Rest of your code with displayProductsAsAdmin() function)
-
-int main()
-{
-    // ... (Rest of your main function)
-
-    int choice = 0;
-    while (choice != 5)
-    {
-        printf("Select an admin task\n");
-        printf("1. Add Product\n");
-        printf("2. Edit Product\n");
-        printf("3. View All Products\n");
-        printf("4. Remove Product\n");
-        printf("5. Exit\n");
-        scanf("%d", &choice);
-
-        switch (choice)
-        {
-        case 1:
-            addToCategory();
-            break;
-        case 2:
-            editProduct();
-            break;
-        case 3:
-            displayProductsAsAdmin();
-            break;
-        case 4:
-            deleteProduct();
-            break;
-        case 5:
-            printf("Exiting admin menu.\n");
-            break;
-        default:
-            printf("Invalid choice. Please try again.\n");
-            break;
-        }
-    }
-
-    return 0;
-}
-
-
-
-*/
